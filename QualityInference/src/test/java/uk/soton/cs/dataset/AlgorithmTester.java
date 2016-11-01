@@ -6,11 +6,13 @@ import java.util.HashSet;
 
 import org.json.simple.parser.ParseException;
 
+import uk.soton.cs.dataset.Parser;
 import uk.soton.cs.inference.algorithms.MessagePassing;
 import uk.soton.cs.inference.dataset.CSObject;
 import uk.soton.cs.inference.dataset.ObjectIndex;
 
 public class AlgorithmTester {
+	
 	
 	public static void main(String[] args) {
 		if(args.length<1)

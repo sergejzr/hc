@@ -38,7 +38,7 @@ public class MessagePassing {
 			
 		
 			System.out.println("Round "+k+" start ");
-			BigArray oldY=Y.copy();
+			//BigArray oldY=Y.copy();
 			for (CSObject object : idx.getObjectindex().values()) {
 				double tmp_sum_all = 0;
 
