@@ -22,6 +22,14 @@ import uk.soton.cs.inference.dataset.ObjectIndex;
 public class Parser {
 	File maindir = new File("/home/zerr/git/QualityAssessment/experiments/SnapshotSerengeti");
 
+	public Parser(File file) {
+		maindir=file;
+	}
+
+	public Parser() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public static void main(String[] args) {
 		Parser p = new Parser();
 		try {

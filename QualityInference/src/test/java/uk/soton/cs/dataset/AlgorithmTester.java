@@ -1,5 +1,6 @@
 package uk.soton.cs.dataset;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 
@@ -12,14 +13,19 @@ import uk.soton.cs.inference.dataset.ObjectIndex;
 public class AlgorithmTester {
 	
 	public static void main(String[] args) {
+		if(args.length<1)
+		{
+			System.out.println("arg missing: file");
+			return;
+		}
 		AlgorithmTester t=new AlgorithmTester();
-		t.test();
+		t.test(args);
 	}
 
-	private void test() {
+	private void test(String[] args) {
 		MessagePassing mp=new MessagePassing();
 		
-		Parser p=new Parser();
+		Parser p=new Parser(new File(args[0]));
 		try {
 			
 			ObjectIndex idx = p.loadIndex();
