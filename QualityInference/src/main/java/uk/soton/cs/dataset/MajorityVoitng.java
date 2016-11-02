@@ -14,7 +14,7 @@ public class MajorityVoitng {
 
 	public Hashtable<String, Double> calculate(ObjectIndex idx, Collection<CSObject> refobjects, int level,
 			String answer) {
-		int tp = 0, fp = 0, tn = 0, fn = 0;
+		double tp = 0.0001, fp = 0.0001, tn = 0.0001, fn = 0.0001;
 
 		Hashtable<String, Double> ret = new Hashtable<>();
 		for (CSObject object : refobjects) {

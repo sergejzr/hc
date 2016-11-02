@@ -4,15 +4,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Vector;
 
-import org.apache.commons.lang3.ArrayUtils;
-
+import meka.classifiers.multilabel.Evaluation;
+import meka.classifiers.multilabel.ProblemTransformationMethod;
 import uk.soton.cs.inference.algorithms.BigArray;
+import weka.clusterers.EM;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.Instances;
 import weka.core.SparseInstance;
 import weka.core.converters.ArffSaver;
@@ -88,51 +92,44 @@ public class ObjectIndex {
 
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		Attribute aclass;
-		attributes.add(aclass = new Attribute("species", new ArrayList<String>(lables.elementAt(level))));
+	//	attributes.add(aclass = new Attribute("species", new ArrayList<String>(lables.elementAt(level))));
 
 		for (String lable : lables.elementAt(level)) {
-			attributes.add(new Attribute("true_"+lable,Arrays.asList("0,1".split(","))));
+			attributes.add(new Attribute("true_" + lable, Arrays.asList("0,1".split(","))));
 		}
 		for (String lable : lables.elementAt(level)) {
-			attributes.add(new Attribute("votes_"+lable));
+			attributes.add(new Attribute("votes_" + lable));
 		}
 		ArffSaver saver = new ArffSaver();
 
 		Instances dataSet;
 
-		int maxnumatt = lables.elementAt(level).size();
+		int maxnumatt = lables.elementAt(level).size() * 2 ;
 
 		File outarff = file;
 		saver.setFile(outarff);
 		saver.setDestination(outarff);
-		dataSet = new Instances("SnapshotSerengeti", attributes, 0);
-		dataSet.setClass(aclass);
+		dataSet = new Instances("Example_Dataset: -C "+lables.elementAt(level).size()+"", attributes, 0);
+		//dataSet.setClass(aclass);
 
 		for (CSObject object : objectidx.values()) {
 			ArrayList<Integer> indexeslist = new ArrayList<>();
 			ArrayList<Double> valueslist = new ArrayList<>();
 			Hashtable<String, Double> counter = new Hashtable<>();
 
-	
-			
 			Annotation trueannotation = goldUser.getObjects().get(object.getId());
 			HashSet<String> trueset = trueannotation.getAtLevel(level);
-			
-			for (String lable : lables.elementAt(level))
-			{
-				indexeslist.add(dataSet.attribute("true_"+lable).index());
-				valueslist.add(trueset.contains(lable)?1.:0.);
+
+			for (String lable : lables.elementAt(level)) {
+				indexeslist.add(dataSet.attribute("true_" + lable).index());
+				valueslist.add(trueset.contains(lable) ? 1. : 0.);
 			}
 			/*
-			for(Annotation annotation:goldUser.getObjects().values())
-			{
-				for(String truelabel: annotation.getAtLevel(level))
-				{
-					gtindexlist.add(dataSet.attribute("true_"+truelabel).index());
-					gtvalueslist.add()
-				}
-			}
-			*/
+			 * for(Annotation annotation:goldUser.getObjects().values()) {
+			 * for(String truelabel: annotation.getAtLevel(level)) {
+			 * gtindexlist.add(dataSet.attribute("true_"+truelabel).index());
+			 * gtvalueslist.add() } }
+			 */
 			for (Annotation annotation : object.getUsers().values()) {
 				for (String label : annotation.getAtLevel(level)) {
 					Double cnt = counter.get(label);
@@ -145,11 +142,11 @@ public class ObjectIndex {
 
 			for (String label : counter.keySet()) {
 				Double val = counter.get(label);
-				Attribute att = dataSet.attribute("votes_"+label);
+				Attribute att = dataSet.attribute("votes_" + label);
 				indexeslist.add(att.index());
 				valueslist.add(val);
 			}
-
+			sort(indexeslist, valueslist, dataSet);
 			double[] values = new double[valueslist.size()];
 			int[] indexes = new int[valueslist.size()];
 
@@ -161,7 +158,8 @@ public class ObjectIndex {
 			}
 
 			SparseInstance instance = new SparseInstance(1.0, values, indexes, maxnumatt);
-			dataSet.add(instance);
+			DenseInstance instance2=new DenseInstance(instance);
+			dataSet.add(instance2);
 			instance.setDataset(dataSet);
 		}
 
@@ -172,15 +170,66 @@ public class ObjectIndex {
 
 			nonSparseToSparseInstance.setInputFormat(instNew);
 			Instances sparseDataset = Filter.useFilter(instNew, nonSparseToSparseInstance);
-			sparseDataset.setClassIndex(aclass.index());
+			//sparseDataset.setClassIndex(aclass.index());
 
 			saver.setDestination(outarff);
-			saver.setInstances(sparseDataset);
+			saver.setInstances(dataSet);
 			saver.writeBatch();
+
+		
+			
+			meka.classifiers.multilabel.meta.EM EM=new meka.classifiers.multilabel.meta.EM();
+			dataSet.setClassIndex(maxnumatt);
+			EM.buildClassifier(dataSet);
+			
+
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
+	}
+
+	private void sort(ArrayList<Integer> indexeslist, ArrayList<Double> valueslist, Instances dataSet) {
+		
+		Hashtable<Integer, Integer> rel=new Hashtable<>();
+		
+		for(int i=0;i<indexeslist.size();i++)
+		{
+			rel.put(indexeslist.get(i), i);
+		}
+		
+		
+		Vector<Integer> indexeslist_ret=new Vector<>(indexeslist.size());
+		Vector<Double> valueslist_ret =new Vector<>(valueslist.size());
+		
+		ArrayList<Integer> sortedidx = new ArrayList<>();
+		sortedidx.addAll(indexeslist);
+		
+		Collections.sort(sortedidx);
+		
+		for(Integer idx:sortedidx)
+		{
+			Integer oindex = rel.get(idx);
+			indexeslist_ret.add(indexeslist.get(oindex));
+			valueslist_ret.add(valueslist.get(oindex));
+		}
+		indexeslist.clear();
+		indexeslist.addAll(indexeslist_ret);
+		
+		valueslist.clear();
+		valueslist.addAll(valueslist_ret);
+
+	}
+
+	public BigArray randomizeArrayPos() {
+		BigArray ret = new BigArray();
+		Random r = new Random();
+		for (CSObject object : objectidx.values()) {
+			for (String userid : object.getUsers().keySet()) {
+				ret.set(object.getId(), userid, Math.abs(r.nextGaussian()));
+			}
+		}
+		return ret;
 	}
 }
