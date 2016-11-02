@@ -1,5 +1,6 @@
 package uk.soton.cs.inference.dataset;
 
+import java.util.HashSet;
 import java.util.Vector;
 
 public class Annotation {
@@ -11,14 +12,18 @@ public Annotation(CSObject object, CSUser user) {
 	this.object = object;
 	this.user = user;
 }
-Vector<String> levels=new Vector<>();
+Vector<HashSet<String>> levels=new Vector<>();
 
 public void addLevel(int level, String annotationstr) {
 	while(levels.size()<level+1)
 	{
 		levels.add(null);
 	}
-	levels.set(level, annotationstr);
+	HashSet<String> conti = levels.elementAt(level);
+	if(conti==null){
+		levels.set(level, conti=new HashSet<>());
+	}
+	conti.add(annotationstr);
 	
 }
 
@@ -29,7 +34,7 @@ public CSObject getObject() {
 	return object;
 }
 
-public String getAtLevel(int i) {
+public HashSet<String> getAtLevel(int i) {
 	return levels.get(i);
 	
 }

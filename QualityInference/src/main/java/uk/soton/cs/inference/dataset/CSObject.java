@@ -44,7 +44,7 @@ Vector<Hashtable<String, HashSet<String>>> answersidx=null;
 	private void createIndex() {
 		
 		if(answersidx!=null) return;
-		answersidx=new Vector<>();
+		answersidx=new Vector<Hashtable<String, HashSet<String>>>();
 		for(Annotation a:users.values())
 		{
 			for(int i=0;i<a.levelsSize();i++)
@@ -57,13 +57,24 @@ Vector<Hashtable<String, HashSet<String>>> answersidx=null;
 				
 				levelidx=answersidx.elementAt(i);
 						
-						
-				HashSet<String> curusers = levelidx.get(a.getAtLevel(i));
-				if(curusers==null)
+				
+				for(String lable: a.getAtLevel(i))
 				{
-					levelidx.put(a.getAtLevel(i), curusers=new HashSet<>());
+					HashSet<String> curusers = levelidx.get(lable);
+					
+					if(curusers==null)
+					{
+						levelidx.put(lable, curusers=new HashSet<>());
+					}
+					curusers.add(a.user.getId());
+					
 				}
-				curusers.add(a.user.getId());
+						
+				
+				
+				
+				
+				
 				
 			}
 		}
