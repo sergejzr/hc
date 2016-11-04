@@ -49,7 +49,7 @@ public class AlgorithmTester {
 			
 		}
 		
-		
+		System.out.println("All done");
 		
 		
 		

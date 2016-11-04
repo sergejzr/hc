@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -21,16 +22,16 @@ import uk.soton.cs.inference.dataset.CSObject;
 import uk.soton.cs.inference.dataset.CSUser;
 import uk.soton.cs.inference.dataset.ObjectIndex;
 
-public class TestParser {
+public class Annotations2Triples {
 
 
-	public TestParser() {
+	public Annotations2Triples() {
 		
 	}
 
 
 	public static void main(String[] args) {
-		TestParser p = new TestParser();
+		Annotations2Triples p = new Annotations2Triples();
 		try {
 			p.loadIndex(new File(args[0]),new File(args[1]));
 		} catch (IOException e) {
@@ -42,17 +43,14 @@ public class TestParser {
 		}
 	}
 
-	public ObjectIndex loadIndex(File index1, File gold) throws IOException, ParseException {
+	public void loadIndex(File in, File out) throws IOException, ParseException {
 	
 		String line;
 
-		CSUser goldUser = new CSUser("GoldUser");
-		Hashtable<String, CSObject> objectidx = new Hashtable<>();
-		Hashtable<String, CSUser> useridx = new Hashtable<>();
 		//useridx.put(goldUser.getId(), goldUser);
 		
 	//	Scanner sc=new Scanner(new FileInputStream(index1)).useDelimiter(":\\s\\[");
-		Scanner sc=new Scanner(new FileInputStream(index1)).useDelimiter(",\\s'");
+		Scanner sc=new Scanner(new FileInputStream(in)).useDelimiter(",\\s'");
 		int j=0;
 
 		
@@ -67,7 +65,7 @@ public class TestParser {
 		int start = 0;
 
 		while (sc.hasNext()) {
-
+ArrayList<String> triple=new ArrayList<>();
 			//int end = matcher.start();
 			String objline = sc.next();// line.substring(start, end);
 			// System.out.println(objline);
@@ -76,12 +74,7 @@ public class TestParser {
 			matcherobj.find();
 
 			String uid = matcherobj.group(1);
-
-			CSUser user = useridx.get(uid);
-			if (user == null) {
-				useridx.put(uid, user = new CSUser(uid));
-			}
-
+			triple.add(uid);
 			String annotations = objline.substring(matcherobj.end());
 
 			Pattern pannotations = Pattern.compile("\\((.*?)\\)");
@@ -92,61 +85,24 @@ public class TestParser {
 				matcherobj = pobject.matcher(matcherannotations.group(1));
 				matcherobj.find();
 				String objid = matcherobj.group(1);
-				CSObject object = objectidx.get(objid);
-				if (object == null) {
-					objectidx.put(objid, object = new CSObject(objid));
-				}
-				Annotation annotation = new Annotation(object, user);
-
-				object.addAnnotation(annotation);
-				user.addAnnotation(annotation);
-
-				int level = 0;
+				triple.add(objid);
+				
+				StringBuilder sb=new StringBuilder();
 				while (matcherobj.find()) {
 					String annotationstr = (matcherobj.group(1));
-					// LevelAnnotation levelannotation=new
-					// LevelAnnotation(level, annotationstr);
-					annotation.addLevel(level, annotationstr);
-
-					// user.addAnotation(object,annotation);
-
-					level++;
+					sb.append(annotationstr);
+					sb.append(",");
+				
 				}
 			}
 
-			// System.out.println(annotations);
+		 System.out.println(triple);
 
 			
 
 		}
 		
-		ObjectIndex idx = new ObjectIndex(objectidx, useridx);
-
-		CSVFormat csvFileFormat = CSVFormat.EXCEL.withHeader().withDelimiter(',').withQuote('"');
-		FileReader fileReader = new FileReader(gold);
-		CSVParser csvFileParser = new CSVParser(fileReader, csvFileFormat);
-
-		Iterator<CSVRecord> it = csvFileParser.iterator();
-		while (it.hasNext()) {
-			CSVRecord cur = it.next();
-			String objectid = cur.get(0);
-
-			CSObject object = idx.getObject(objectid);
-
-			Annotation goldannotation = new Annotation(object, goldUser);
-			//object.addAnnotation(goldannotation);
-			goldUser.addAnnotation(goldannotation);
-
-			for (int i = 2; i < cur.size(); i++) {
-				goldannotation.addLevel(i-2, cur.get(i));
-			}
-			
-				
-		}
-		idx.setGoldUser(goldUser);
-		csvFileParser.close();
-		idx.calculateFullPath();
-		return idx;
+		
 	}
 
 }

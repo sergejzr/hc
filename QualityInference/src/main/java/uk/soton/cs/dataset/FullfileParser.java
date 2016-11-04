@@ -21,16 +21,16 @@ import uk.soton.cs.inference.dataset.CSObject;
 import uk.soton.cs.inference.dataset.CSUser;
 import uk.soton.cs.inference.dataset.ObjectIndex;
 
-public class TestParser {
+public class FullfileParser {
 
 
-	public TestParser() {
+	public FullfileParser() {
 		
 	}
 
 
 	public static void main(String[] args) {
-		TestParser p = new TestParser();
+		FullfileParser p = new FullfileParser();
 		try {
 			p.loadIndex(new File(args[0]),new File(args[1]));
 		} catch (IOException e) {
@@ -52,7 +52,7 @@ public class TestParser {
 		//useridx.put(goldUser.getId(), goldUser);
 		
 	//	Scanner sc=new Scanner(new FileInputStream(index1)).useDelimiter(":\\s\\[");
-		Scanner sc=new Scanner(new FileInputStream(index1)).useDelimiter(",\\s'");
+		Scanner sc=new Scanner(new FileInputStream(index1)).useDelimiter(",\\s['\"]");
 		int j=0;
 
 		
