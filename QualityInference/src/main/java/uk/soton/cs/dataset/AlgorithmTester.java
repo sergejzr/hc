@@ -25,7 +25,7 @@ public class AlgorithmTester {
 		
 		ArrayList<AlgoThread> mythreads=new ArrayList<>();
 		
-		for(Integer k:new Integer[]{0,1}){
+		for(Integer k:new Integer[]{0,1,2,3,5,10,20,30,40,50,100}){
 		AlgoThread at=new AlgoThread(t,args, k);
 		mythreads.add(at);
 		at.start();
