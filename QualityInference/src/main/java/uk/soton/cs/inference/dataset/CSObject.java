@@ -3,6 +3,7 @@ package uk.soton.cs.inference.dataset;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Set;
 import java.util.Vector;
 
 public class CSObject {
@@ -17,6 +18,10 @@ public class CSObject {
 Hashtable<String, Annotation> users=new Hashtable<>();
 //Hashtable<Integer, HashSet<String>> levelannotations=new Hashtable<>();
 
+public Set<String> getAnnotatorIds()
+{
+	return users.keySet();
+}
 	public void addAnnotation(Annotation annotation) {
 		users.put(annotation.getUser().getId(), annotation);
 	}
@@ -94,5 +99,14 @@ Vector<Hashtable<String, HashSet<String>>> answersidx=null;
 			sb.append(label+answers.get(label)+"\n");
 		}
 		return sb.toString();
+	}
+	@Override
+	public boolean equals(Object obj) {
+		
+		return this.id.equals(((CSObject)obj).id);
+	}
+	public boolean sameObject(CSObject object) {
+		// TODO Auto-generated method stub
+		return this.id.equals(object.id);
 	}
 }

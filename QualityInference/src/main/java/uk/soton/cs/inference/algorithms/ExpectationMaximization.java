@@ -57,13 +57,13 @@ public class ExpectationMaximization {
 			}
 
 			if (tmp_sum_all > 0) {
-				if (idx.getGolduser().getObjects().get(object.getId()).getAtLevel(level).contains(answer)) {
+				if (idx.getGolduser().getAnnotationsByThisUser().get(object.getId()).getAtLevel(level).contains(answer)) {
 					tp++;
 				} else {
 					fp++;
 				}
 			} else {
-				if (idx.getGolduser().getObjects().get(object.getId()).getAtLevel(level).contains(answer)) {
+				if (idx.getGolduser().getAnnotationsByThisUser().get(object.getId()).getAtLevel(level).contains(answer)) {
 					fn++;
 				} else {
 					tn++;

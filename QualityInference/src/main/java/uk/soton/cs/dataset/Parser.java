@@ -20,20 +20,17 @@ import uk.soton.cs.inference.dataset.CSUser;
 import uk.soton.cs.inference.dataset.ObjectIndex;
 
 public class Parser {
-	File maindir = new File("/home/zerr/git/QualityAssessment/experiments/SnapshotSerengeti");
 
-	public Parser(File file) {
-		maindir=file;
-	}
 
 	public Parser() {
-		// TODO Auto-generated constructor stub
+		
 	}
+
 
 	public static void main(String[] args) {
 		Parser p = new Parser();
 		try {
-			p.loadIndex();
+			p.loadIndex(new File(args[0]),new File(args[1]));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -43,9 +40,8 @@ public class Parser {
 		}
 	}
 
-	public ObjectIndex loadIndex() throws IOException, ParseException {
-		File index1 = new File(maindir, "overlap_serengeti_answers_userbased.txt");
-
+	public ObjectIndex loadIndex(File index1, File gold) throws IOException, ParseException {
+	
 		String line;
 
 		CSUser goldUser = new CSUser("GoldUser");
@@ -115,7 +111,7 @@ public class Parser {
 		ObjectIndex idx = new ObjectIndex(objectidx, useridx);
 
 		CSVFormat csvFileFormat = CSVFormat.EXCEL.withHeader().withDelimiter(',').withQuote('"');
-		FileReader fileReader = new FileReader(new File(maindir, "gold_standard_data_snapshotSerengati.csv"));
+		FileReader fileReader = new FileReader(gold);
 		CSVParser csvFileParser = new CSVParser(fileReader, csvFileFormat);
 
 		Iterator<CSVRecord> it = csvFileParser.iterator();
@@ -137,6 +133,7 @@ public class Parser {
 		}
 		idx.setGoldUser(goldUser);
 		csvFileParser.close();
+		idx.calculateFullPath();
 		return idx;
 	}
 

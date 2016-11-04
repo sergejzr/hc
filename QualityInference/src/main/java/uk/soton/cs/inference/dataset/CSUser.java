@@ -22,10 +22,20 @@ public class CSUser {
 	public String getId() {
 		return id;
 	}
-	public Hashtable<String, Annotation> getObjects() {
+	public Hashtable<String, Annotation> getAnnotationsByThisUser() {
 		return objects;
 	}
+	
+	public Annotation getHerAnnotationForObject(String objectid)
+	{
+		return objects.get(objectid);
+	}
 
+	public Annotation getHerAnnotationForObject(CSObject object)
+	{
+		return getHerAnnotationForObject(object.getId());
+	}
+	
 	Hashtable<String, Double> cache=new Hashtable<>();
 	
 	public double computeAnnotationSum(boolean reindex, String answer, int level, BigArray X) {
@@ -34,7 +44,7 @@ public class CSUser {
 		Double ret = cache.get(key);
 		if(!reindex&&ret!=null) return ret;
 		ret=0.0;
-		for(Annotation annotation:getObjects().values())
+		for(Annotation annotation:getAnnotationsByThisUser().values())
 		{
 
 			if(answer.equals(annotation.getAtLevel(level)))
@@ -50,5 +60,10 @@ public class CSUser {
 		}
 		cache.put(key, ret);
 		return ret;
+	}
+
+	public boolean sameAs(CSUser user) {
+		// TODO Auto-generated method stub
+		return user.id.equals(id);
 	}
 }

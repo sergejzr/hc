@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Random;
 import java.util.Vector;
 
@@ -33,7 +34,30 @@ public class ObjectIndex {
 		super();
 		this.objectidx = objectidx;
 		this.useridx = useridx;
+		computeLables();
+	}
 
+	public void addAnnotation(String userid, String objectid, String[] annotations) {
+		CSObject curobj = objectidx.get(objectid);
+		if (curobj == null) {
+			objectidx.put(objectid, curobj = new CSObject(objectid));
+		}
+		CSUser curuser = useridx.get(userid);
+		if (curuser == null) {
+			useridx.put(userid, curuser = new CSUser(userid));
+		}
+
+		Annotation annotation = new Annotation(curobj, curuser);
+
+		for (int i = 0; i < annotations.length; i++) {
+			annotation.addLevel(i, annotations[i]);
+		}
+		curobj.addAnnotation(annotation);
+		curuser.addAnnotation(annotation);
+
+	}
+
+	private void computeLables() {
 		for (CSObject object : objectidx.values()) {
 			for (Annotation annotation : object.getUsers().values()) {
 				for (int i = 0; i < annotation.levelsSize(); i++) {
@@ -92,7 +116,8 @@ public class ObjectIndex {
 
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		Attribute aclass;
-	//	attributes.add(aclass = new Attribute("species", new ArrayList<String>(lables.elementAt(level))));
+		// attributes.add(aclass = new Attribute("species", new
+		// ArrayList<String>(lables.elementAt(level))));
 
 		for (String lable : lables.elementAt(level)) {
 			attributes.add(new Attribute("true_" + lable, Arrays.asList("0,1".split(","))));
@@ -104,20 +129,20 @@ public class ObjectIndex {
 
 		Instances dataSet;
 
-		int maxnumatt = lables.elementAt(level).size() * 2 ;
+		int maxnumatt = lables.elementAt(level).size() * 2;
 
 		File outarff = file;
 		saver.setFile(outarff);
 		saver.setDestination(outarff);
-		dataSet = new Instances("Example_Dataset: -C "+lables.elementAt(level).size()+"", attributes, 0);
-		//dataSet.setClass(aclass);
+		dataSet = new Instances("Example_Dataset: -C " + lables.elementAt(level).size() + "", attributes, 0);
+		// dataSet.setClass(aclass);
 
 		for (CSObject object : objectidx.values()) {
 			ArrayList<Integer> indexeslist = new ArrayList<>();
 			ArrayList<Double> valueslist = new ArrayList<>();
 			Hashtable<String, Double> counter = new Hashtable<>();
 
-			Annotation trueannotation = goldUser.getObjects().get(object.getId());
+			Annotation trueannotation = goldUser.getAnnotationsByThisUser().get(object.getId());
 			HashSet<String> trueset = trueannotation.getAtLevel(level);
 
 			for (String lable : lables.elementAt(level)) {
@@ -158,7 +183,7 @@ public class ObjectIndex {
 			}
 
 			SparseInstance instance = new SparseInstance(1.0, values, indexes, maxnumatt);
-			DenseInstance instance2=new DenseInstance(instance);
+			DenseInstance instance2 = new DenseInstance(instance);
 			dataSet.add(instance2);
 			instance.setDataset(dataSet);
 		}
@@ -170,18 +195,15 @@ public class ObjectIndex {
 
 			nonSparseToSparseInstance.setInputFormat(instNew);
 			Instances sparseDataset = Filter.useFilter(instNew, nonSparseToSparseInstance);
-			//sparseDataset.setClassIndex(aclass.index());
+			// sparseDataset.setClassIndex(aclass.index());
 
 			saver.setDestination(outarff);
 			saver.setInstances(dataSet);
 			saver.writeBatch();
 
-		
-			
-			meka.classifiers.multilabel.meta.EM EM=new meka.classifiers.multilabel.meta.EM();
+			meka.classifiers.multilabel.meta.EM EM = new meka.classifiers.multilabel.meta.EM();
 			dataSet.setClassIndex(maxnumatt);
 			EM.buildClassifier(dataSet);
-			
 
 		} catch (Exception e1) {
 			// TODO Auto-generated catch block
@@ -191,32 +213,29 @@ public class ObjectIndex {
 	}
 
 	private void sort(ArrayList<Integer> indexeslist, ArrayList<Double> valueslist, Instances dataSet) {
-		
-		Hashtable<Integer, Integer> rel=new Hashtable<>();
-		
-		for(int i=0;i<indexeslist.size();i++)
-		{
+
+		Hashtable<Integer, Integer> rel = new Hashtable<>();
+
+		for (int i = 0; i < indexeslist.size(); i++) {
 			rel.put(indexeslist.get(i), i);
 		}
-		
-		
-		Vector<Integer> indexeslist_ret=new Vector<>(indexeslist.size());
-		Vector<Double> valueslist_ret =new Vector<>(valueslist.size());
-		
+
+		Vector<Integer> indexeslist_ret = new Vector<>(indexeslist.size());
+		Vector<Double> valueslist_ret = new Vector<>(valueslist.size());
+
 		ArrayList<Integer> sortedidx = new ArrayList<>();
 		sortedidx.addAll(indexeslist);
-		
+
 		Collections.sort(sortedidx);
-		
-		for(Integer idx:sortedidx)
-		{
+
+		for (Integer idx : sortedidx) {
 			Integer oindex = rel.get(idx);
 			indexeslist_ret.add(indexeslist.get(oindex));
 			valueslist_ret.add(valueslist.get(oindex));
 		}
 		indexeslist.clear();
 		indexeslist.addAll(indexeslist_ret);
-		
+
 		valueslist.clear();
 		valueslist.addAll(valueslist_ret);
 
@@ -230,6 +249,53 @@ public class ObjectIndex {
 				ret.set(object.getId(), userid, Math.abs(r.nextGaussian()));
 			}
 		}
+		return ret;
+	}
+
+	public void calculateFullPath() {
+		for (CSObject object : objectidx.values()) {
+			for (Annotation annotation : object.getUsers().values()) {
+				int nextlevel = annotation.levelsSize();
+				StringBuilder sb = new StringBuilder();
+				for (int i = 0; i < nextlevel; i++) {
+					if (sb.length() > 0)
+						sb.append("|");
+					sb.append(annotation.getAtLevel(i));
+				}
+				annotation.addLevel(nextlevel, sb.toString());
+			}
+		}
+		for (Annotation annotation : goldUser.getAnnotationsByThisUser().values()) {
+			int nextlevel = annotation.levelsSize();
+			StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < nextlevel; i++) {
+				if (sb.length() > 0)
+					sb.append("|");
+				sb.append(annotation.getAtLevel(i));
+			}
+			annotation.addLevel(nextlevel, sb.toString());
+		}
+
+	}
+
+	public HashSet<String> getGoldLabels(int level) {
+		HashSet<String> labels = new HashSet<>();
+		for (Annotation annotation : goldUser.getAnnotationsByThisUser().values()) {
+			labels.addAll(annotation.getAtLevel(level));
+		}
+		return labels;
+	}
+
+	public HashSet<String> getAllPredictedLables(int level) {
+		HashSet<String> ret = new HashSet<>();
+		for (CSObject object : getObjectindex().values()) {
+
+			for (Annotation annotation : object.getUsers().values()) {
+				ret.addAll(annotation.getAtLevel(level));
+			}
+
+		}
+
 		return ret;
 	}
 }

@@ -6,6 +6,21 @@ public class BigArray {
 	
 Hashtable<String, Hashtable<String, Double>> arr=new Hashtable<>();
 
+@Override
+	public String toString() {
+		StringBuilder sb=new StringBuilder();
+		
+		for(String xid:arr.keySet())
+		{
+			Hashtable<String, Double> y = arr.get(xid);
+			for(String yid:y.keySet())
+			{
+				sb.append("("+xid+","+yid+","+y.get(yid)+")");
+			}
+			sb.append("\n");
+		}
+		return sb.toString();
+	}
 public void set(String i, String j, double d)
 {
 	Hashtable<String, Double> cur = arr.get(i);
@@ -65,5 +80,24 @@ public double difference(BigArray oldY) {
 	
 
 	return Math.sqrt(sum);
+}
+public String toString(int imax, int jmax) {
+	StringBuilder sb=new StringBuilder();
+	
+	
+	for(String xid:arr.keySet())
+	{
+		int cury=jmax;
+		if(imax--<0) continue;
+		Hashtable<String, Double> y = arr.get(xid);
+		for(String yid:y.keySet())
+		{
+			if(cury--<0) continue;
+			sb.append("("+xid+","+yid+","+y.get(yid)+")");
+		}
+		sb.append("\n");
+		
+	}
+	return sb.toString();
 }
 }

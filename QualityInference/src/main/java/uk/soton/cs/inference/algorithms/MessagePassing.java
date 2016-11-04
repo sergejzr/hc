@@ -1,11 +1,8 @@
 package uk.soton.cs.inference.algorithms;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Random;
 
 import uk.soton.cs.inference.dataset.Annotation;
 import uk.soton.cs.inference.dataset.CSObject;
@@ -15,155 +12,131 @@ import uk.soton.cs.inference.dataset.ObjectIndex;
 public class MessagePassing {
 
 	public Hashtable<String, Double> calculate(ObjectIndex idx, Collection<CSObject> refobjects, int level,
-			String answer) {
+			String answer, int rounds) {
 		double delta = 2;
 		double difference = Double.MAX_VALUE;
 
 		BigArray A = new BigArray();
-		//BigArray Y = idx.randomizeArray();
+		// BigArray Y = idx.randomizeArray();
 		BigArray Y = idx.randomizeArrayPos();
 		BigArray X = new BigArray();
 
-//		/System.out.println();
-		int k = 0;
-
+		// /System.out.println();
+		int k = rounds;
+		//System.out.println("Y: " + Y.toString(2, 2));
 		HashSet<String> cache = new HashSet<>();
-		while (difference > delta && k++ < 4) {
+		while (difference > delta && k-- > 0) {
 
-		//	System.out.println("Round " + k + " start //-------------------------------------");
+			// System.out.println("Round " + k + " start
+			// //-------------------------------------");
 			// BigArray oldY=Y.copy();
 
-			for (CSObject object : idx.getObjectindex().values()) {
-				double tmp_sum_all = 0;
+			for (CSUser user : idx.getUserindex().values()) {
 
-				if(object.getId().equals("ASG000dwnu"))
-				{
-					
-					int thatobj=0;
-					thatobj++;
-				}
-				
-				for (Annotation annotation : object.getUsers().values()) {
-					CSUser user = annotation.getUser();
+				for (Annotation annotation : user.getAnnotationsByThisUser().values()) {
+					CSObject object = annotation.getObject();
+					double tpm_sum = 0.0;
+					int cnt = 0;
+					for (Annotation uannotator : object.getUsers().values()) {
+						CSUser annotator = uannotator.getUser();
+						if (annotator.sameAs(user)) {
+							continue;
+						}
 
-					String key = object.getId() + "|" + level + "|" + user.getId();
-
-					if (cache.contains(key) || object.hasAnnotationExceptForUser(level, answer, user)) {
-						A.set(object.getId(), user.getId(), 1);
-						tmp_sum_all += Y.get(object.getId(), user.getId());
-						cache.add(key);
-					} else {
-						A.set(object.getId(), user.getId(), -1);
-						tmp_sum_all -= Y.get(object.getId(), user.getId());
+						if (uannotator.getAtLevel(level).contains(answer)) {
+							tpm_sum += Y.get(object.getId(), annotator.getId());
+						} else {
+							tpm_sum -= Y.get(object.getId(), annotator.getId());
+						}
+						cnt++;
 					}
-					//X.set(object.getId(), user.getId(), tmp_sum_all);
-				}
-
-				double tmp_j = 0;
-				for (Annotation annotation : object.getUsers().values()) {
-					CSUser user = annotation.getUser();
-
-					CSObject curobject=object;//annotation.getObject();
-					String key = curobject.getId() + "|" + level + "|" + user.getId();
-
-					if (cache.contains(key) || curobject.hasAnnotationExceptForUser(level, answer, user)) {
-						// A.set(object.getId(), user.getId(), 1);
-						// tmp_sum_all+=Y.get(object.getId(), user.getId());
-						tmp_j = Y.get(object.getId(), user.getId());
-						cache.add(key);
-					} else {
-						// A.set(object.getId(), user.getId(), -1);
-						//// tmp_sum_all-=Y.get(object.getId(), user.getId());
-						tmp_j = -Y.get(object.getId(), user.getId());
-					}
-					X.set(object.getId(), user.getId(), tmp_sum_all - tmp_j);
+					// if(cnt>0) tpm_sum/=cnt;
+					X.set(object.getId(), user.getId(), tpm_sum/100.);
 				}
 
 			}
 
-			boolean firstround = true;
+			// System.out.println("X: "+X.toString(2,2));
+
 			for (CSObject object : idx.getObjectindex().values()) {
-				for (CSUser user : idx.getUserindex().values()) {
 
-					double tmp_sum_j_not_i = user.computeAnnotationSum(firstround, answer, level, X);
+				for (Annotation uannotation : object.getUsers().values()) {
 
-					Annotation annotation = user.getObjects().get(object.getId());
-					if (annotation == null)
-						continue;
-					if (annotation.getAtLevel(level).contains(answer)) {
-						tmp_sum_j_not_i -= X.get(annotation.getObject().getId(), user.getId());
-					} else {
-						tmp_sum_j_not_i += X.get(annotation.getObject().getId(), user.getId());
+					CSUser user = uannotation.getUser();
+					double tmp_sum = 0.0;
+					int cnt = 0;
+					for (Annotation annotation : user.getAnnotationsByThisUser().values()) {
+
+						if (annotation.getObject().sameObject(object)) {
+							continue;
+						}
+						if (annotation.getAtLevel(level).contains(answer)) {
+							tmp_sum += X.get(annotation.getObject().getId(), user.getId());
+						} else {
+							tmp_sum -= X.get(annotation.getObject().getId(), user.getId());
+						}
+						cnt++;
 					}
-
-					Y.set(object.getId(), user.getId(), tmp_sum_j_not_i);
-					// difference = Y.difference(oldY);
-
+					// if(cnt>0) tmp_sum/=cnt;
+					Y.set(object.getId(), user.getId(), tmp_sum/100.);
 				}
-				firstround = false;
+
 			}
 
-		//	System.out.println("predict objects at round " + k);
+			//System.out.println("Y: " + Y.toString(2, 2));
 
-		} 
+		}
 		return evaluateAll(level, answer, idx, A, X, Y, refobjects);
 
 	}
 
 	private Hashtable<String, Double> evaluateAll(int level, String answer, ObjectIndex idx, BigArray A, BigArray X,
 			BigArray Y, Collection<CSObject> refobjects) {
-		double tp = 0.0001, fp = 0.0001, tn = 0.0001, fn = 0.0001;
+		double tp = 0, fp = 0, tn = 0, fn = 0;
 
 		Hashtable<String, Double> ret = new Hashtable<>();
 		for (CSObject object : refobjects) {
 
-			if(object.getId().equals("ASG000dwnu"))
-			{
-				
-				int thatobj=0;
-				thatobj++;
-			}
 			double tmp_sum_all = 0;
-			
-			
+
 			for (Annotation annotation : object.getUsers().values()) {
-				
-			if(annotation.getAtLevel(level).contains(answer))
-			{
-				System.out.println("Object: "+object.getId()+" user:"+annotation.getUser().getId()+" labels:"+annotation.getAtLevel(level));
-				
-				A.set(object.getId(), annotation.getUser().getId(), 1);
-				tmp_sum_all += Y.get(object.getId(), annotation.getUser().getId());
-			}else
-			{
-				A.set(object.getId(), annotation.getUser().getId(), -1);
-				tmp_sum_all -= Y.get(object.getId(), annotation.getUser().getId());
-			}
-				/*
-				
-				if (object.hasAnnotation(level, answer)) {
-					
-					System.out.println("Annotations: "+annotation.getAtLevel(level));
-					
-					A.set(object.getId(), annotation.getUser().getId(), 1);
+
+				if (annotation.getAtLevel(level).contains(answer)) {
+					// System.out.println("Object: "+object.getId()+"
+					// user:"+annotation.getUser().getId()+"
+					// labels:"+annotation.getAtLevel(level));
+
 					tmp_sum_all += Y.get(object.getId(), annotation.getUser().getId());
 				} else {
-					A.set(object.getId(), annotation.getUser().getId(), -1);
+
 					tmp_sum_all -= Y.get(object.getId(), annotation.getUser().getId());
 				}
-				*/
-				
-				
+				/*
+				 * 
+				 * if (object.hasAnnotation(level, answer)) {
+				 * 
+				 * System.out.println("Annotations: "
+				 * +annotation.getAtLevel(level));
+				 * 
+				 * A.set(object.getId(), annotation.getUser().getId(), 1);
+				 * tmp_sum_all += Y.get(object.getId(),
+				 * annotation.getUser().getId()); } else { A.set(object.getId(),
+				 * annotation.getUser().getId(), -1); tmp_sum_all -=
+				 * Y.get(object.getId(), annotation.getUser().getId()); }
+				 */
+
 			}
 
- 			if (tmp_sum_all > 0) {
-				if (idx.getGolduser().getObjects().get(object.getId()).getAtLevel(level).contains(answer)) {
+			if (tmp_sum_all > 0) {
+				if (idx.getGolduser().getAnnotationsByThisUser().get(object.getId()).getAtLevel(level)
+						.contains(answer)) {
 					tp++;
 				} else {
 					fp++;
 				}
 			} else {
-				if (idx.getGolduser().getObjects().get(object.getId()).getAtLevel(level).contains(answer)) {
+				if (idx.getGolduser().getAnnotationsByThisUser().get(object.getId()).getAtLevel(level)
+						.contains(answer)) {
 					fn++;
 				} else {
 					tn++;
@@ -179,23 +152,21 @@ public class MessagePassing {
 			// System.out.println(object.printAnnotations(level));
 		}
 
-		//if(fp==0){fp=0.001;}
-		//if(fn==0){fn=0.001;}
-		
-		
+		// if(fp==0){fp=0.001;}
+		// if(fn==0){fn=0.001;}
+
 		double precision = 1. * tp / (tp + fp);
 		double recall = 1. * tp / (tp + fn);
 
-		ret.put("tp", (double)tp );
-		ret.put("tn",(double)tn);
-		ret.put("fp", (double)fp );
-		ret.put("fn",(double)fn);
+		ret.put("tp", (double) tp);
+		ret.put("tn", (double) tn);
+		ret.put("fp", (double) fp);
+		ret.put("fn", (double) fn);
 		ret.put("Accuracy", (1. * (tp + tn) / (tp + tn + fp + fn)));
 		ret.put("Precision", precision);
-		ret.put("Recall", recall );
+		ret.put("Recall", recall);
 		ret.put("F1", 2 * ((precision * recall) / (precision + recall)));
-		
-		
+
 		return ret;
 
 	}
