@@ -10,10 +10,15 @@ import uk.soton.cs.inference.dataset.Annotation;
 import uk.soton.cs.inference.dataset.CSObject;
 import uk.soton.cs.inference.dataset.ObjectIndex;
 
-public class MajorityVoitng {
+public class MajorityVoitng extends Algorithm{
+
+	public MajorityVoitng() {
+		super("MV");
+		// TODO Auto-generated constructor stub
+	}
 
 	public Hashtable<String, Double> calculate(ObjectIndex idx, Collection<CSObject> refobjects, int level,
-			String answer, int rounds) {
+			String answer, Integer rounds) {
 		double tp = 0, fp = 0., tn = 0., fn = 0.;
 
 		Hashtable<String, Double> ret = new Hashtable<>();

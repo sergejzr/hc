@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -53,7 +54,7 @@ public class Annotations2Triples {
 		Scanner sc=new Scanner(new FileInputStream(in)).useDelimiter(",\\s'");
 		int j=0;
 
-		
+		FileWriter fw=new FileWriter(out);
 	
 		
 		
@@ -65,43 +66,67 @@ public class Annotations2Triples {
 		int start = 0;
 
 		while (sc.hasNext()) {
-ArrayList<String> triple=new ArrayList<>();
+ArrayList<Triple> triples=new ArrayList<>();
 			//int end = matcher.start();
 			String objline = sc.next();// line.substring(start, end);
 			// System.out.println(objline);
-			Pattern pobject = Pattern.compile("'(.*?)['\"]");
+			Pattern pobject = Pattern.compile("'(.*?)['\"]:");
 			Matcher matcherobj = pobject.matcher(objline);
-			matcherobj.find();
+			if(!matcherobj.find())
+			{
+				 pobject = Pattern.compile("(.*?)['\"]:");
+				 matcherobj = pobject.matcher(objline);
+				 matcherobj.find();
+			}
 
 			String uid = matcherobj.group(1);
-			triple.add(uid);
+			
+			if(uid.trim().length()==0)
+			{
+				int y=0;
+				y++;
+			}
 			String annotations = objline.substring(matcherobj.end());
 
 			Pattern pannotations = Pattern.compile("\\((.*?)\\)");
 			Matcher matcherannotations = pannotations.matcher(annotations);
 
+			
 			while (matcherannotations.find()) {
 
-				matcherobj = pobject.matcher(matcherannotations.group(1));
-				matcherobj.find();
+				Pattern objectid=Pattern.compile("u'(.*?)'");
+				matcherobj = objectid.matcher(matcherannotations.group(1));
+				if(!matcherobj.find())
+				{
+					int y=0;
+					y++;
+				}
 				String objid = matcherobj.group(1);
-				triple.add(objid);
+				
 				
 				StringBuilder sb=new StringBuilder();
+				boolean first=true;
 				while (matcherobj.find()) {
 					String annotationstr = (matcherobj.group(1));
+					
+					if(!first)
+						sb.append(",");
 					sb.append(annotationstr);
-					sb.append(",");
+					first=false;
 				
 				}
+			//	triples.add(new Triple(uid, objid, sb.toString()));
+				
+					String linex=uid+"\t"+objid+"\t"+sb.toString()+"\n";
+				fw.write(linex);
+			//	System.out.println(linex);
 			}
 
-		 System.out.println(triple);
-
+		
 			
 
 		}
-		
+		sc.close();
 		
 	}
 

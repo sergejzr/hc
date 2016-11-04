@@ -14,7 +14,7 @@ import uk.soton.cs.inference.dataset.CSObject;
 import uk.soton.cs.inference.dataset.ObjectIndex;
 import uk.soton.sys.WorkerThreadFactory;
 
-public class AlgorithmTester {
+public class AlgorithmTester implements AlgoTester{
 
 	public static void main(String[] args) {
 		if (args.length < 1) {

@@ -4,15 +4,21 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Hashtable;
 
+import uk.soton.cs.dataset.Algorithm;
 import uk.soton.cs.inference.dataset.Annotation;
 import uk.soton.cs.inference.dataset.CSObject;
 import uk.soton.cs.inference.dataset.CSUser;
 import uk.soton.cs.inference.dataset.ObjectIndex;
 
-public class MessagePassing {
+public class MessagePassing extends Algorithm{
+
+	public MessagePassing() {
+		super("MP");
+	}
+
 
 	public Hashtable<String, Double> calculate(ObjectIndex idx, Collection<CSObject> refobjects, int level,
-			String answer, int rounds) {
+			String answer, Integer rounds) {
 		double delta = 2;
 		double difference = Double.MAX_VALUE;
 
