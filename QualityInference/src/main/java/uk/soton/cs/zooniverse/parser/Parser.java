@@ -1,4 +1,4 @@
-package uk.soton.cs.dataset;
+package uk.soton.cs.zooniverse.parser;
 
 import java.io.BufferedReader;
 import java.io.File;

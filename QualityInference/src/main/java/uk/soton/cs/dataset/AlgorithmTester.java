@@ -12,6 +12,7 @@ import uk.soton.cs.inference.algorithms.MessagePassing;
 import uk.soton.cs.inference.dataset.Annotation;
 import uk.soton.cs.inference.dataset.CSObject;
 import uk.soton.cs.inference.dataset.ObjectIndex;
+import uk.soton.cs.zooniverse.parser.Parser;
 import uk.soton.sys.WorkerThreadFactory;
 
 public class AlgorithmTester implements AlgoTester{

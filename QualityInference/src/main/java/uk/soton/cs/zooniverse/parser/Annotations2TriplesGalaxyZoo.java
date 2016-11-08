@@ -57,7 +57,7 @@ public class Annotations2TriplesGalaxyZoo {
 
 		FileWriter fw=new FileWriter(out);
 	
-		
+		fw.write("objectid\tuserid\tannottions\ttime\n");
 		
 		
 		//BufferedReader br = new BufferedReader(new FileReader(index1));
@@ -118,9 +118,16 @@ ArrayList<Triple> triples=new ArrayList<>();
 				}
 			//	triples.add(new Triple(uid, objid, sb.toString()));
 				
-					String linex=uid+"\t"+objid+"\t"+sb.toString()+"\n";
-				fw.write(linex);
-			//	System.out.println(linex);
+				
+					fw.write(uid);
+					fw.write("\t");
+					fw.write(objid);
+					fw.write("\t");
+					fw.write(sb.toString());
+					fw.write("\t");
+					fw.write("\n");
+					
+				
 			}
 
 		

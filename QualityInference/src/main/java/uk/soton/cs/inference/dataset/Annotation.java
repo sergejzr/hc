@@ -13,7 +13,10 @@ public Annotation(CSObject object, CSUser user) {
 	this.user = user;
 }
 Vector<HashSet<String>> levels=new Vector<>();
-
+private String time;
+public String getTime() {
+	return time;
+}
 public void addLevel(int level, String annotationstr) {
 	while(levels.size()<level+1)
 	{
@@ -42,5 +45,10 @@ public HashSet<String> getAtLevel(int i) {
 public int levelsSize() {
 	// TODO Auto-generated method stub
 	return levels.size();
+}
+
+public void addTimestamp(String time) {
+	this.time=time;
+	
 }
 }

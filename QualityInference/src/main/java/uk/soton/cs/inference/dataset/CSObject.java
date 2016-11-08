@@ -14,7 +14,19 @@ public class CSObject {
 		this.id = id;
 	}
 
+public String toString()
+{
+	
+StringBuilder sb=new StringBuilder();
+sb.append(id);
+sb.append("\t");
 
+for(String uid:users.keySet())
+{
+sb.append(uid+"("+users.get(uid).levels+") ");
+}
+return sb.toString();
+};
 Hashtable<String, Annotation> users=new Hashtable<>();
 //Hashtable<Integer, HashSet<String>> levelannotations=new Hashtable<>();
 

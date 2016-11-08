@@ -35,7 +35,7 @@ public class Annotations2TriplesSnapshotSerengeti {
 	public static void main(String[] args) {
 		Annotations2TriplesSnapshotSerengeti p = new Annotations2TriplesSnapshotSerengeti();
 		try {
-			p.loadIndex(new File(args[0]),new File(args[1]));
+			p.convert(new File(args[0]),new File(args[1]));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -46,10 +46,11 @@ public class Annotations2TriplesSnapshotSerengeti {
 	}
 
 	
-	public void loadIndex(File in, File out) throws IOException, ParseException {
+	public void convert(File in, File out) throws IOException, ParseException {
 		
 		String line=null;
 		FileWriter fw=new FileWriter(out);
+		fw.write("user_id\tobject_id\tannottion_path\ttimestamp\n");
 		BufferedReader br = new BufferedReader(new FileReader(in));
 		Pattern p = Pattern.compile("\" ObjectId");
 		Matcher matcher = p.matcher(line = br.readLine());
@@ -98,14 +99,13 @@ public class Annotations2TriplesSnapshotSerengeti {
 				}
 			
 				
-				
-			//	triples.add(new Triple(uid, objid, sb.toString()));
-				
-					String linex=uid+"\t"+objid+"\t"+sb.toString()+"\n";
-				//	System.out.println(linex);
-					
-				fw.write(linex);
-			//	System.out.println(linex);
+				fw.write(uid);
+				fw.write("\t");
+				fw.write(objid);
+				fw.write("\t");
+				fw.write(sb.toString());
+				fw.write("\t");
+				fw.write("\n");
 			}
 
 		
@@ -114,6 +114,7 @@ public class Annotations2TriplesSnapshotSerengeti {
 		}
 		
 		fw.close();
+		br.close();
 
 		
 	}
